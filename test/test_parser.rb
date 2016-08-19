@@ -522,7 +522,7 @@ class ParserTest < Test::Unit::TestCase
     assert_sexp([[:var,
                   [[:var_decl,
                     :x,
-                    [:assign, [:add, [:lit, 5], [:lit, 10]]]
+                    [:assign, [:lit, 15]]
                   ]]
                 ]],
                 @parser.parse('var x = 5 + 10;'))
@@ -1156,7 +1156,7 @@ class ParserTest < Test::Unit::TestCase
     assert_sexp([[:var,
                   [[:var_decl,
                     :x,
-                    [:assign, [:function_call, 
+                    [:assign, [:function_call,
                       [:function_call, [:resolve, "bar"], [:args, []]],
                     [:args, []]]]
                   ]]
