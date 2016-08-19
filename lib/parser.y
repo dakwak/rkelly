@@ -262,6 +262,7 @@ rule
 
   AdditiveExpr:
     MultiplicativeExpr
+  | NumberAdditiveExpr
   | AdditiveExpr '+' MultiplicativeExpr { result = AddNode.new(val[0], val[2]) }
   | AdditiveExpr '-' MultiplicativeExpr { result = SubtractNode.new(val[0], val[2]) }
   ;
