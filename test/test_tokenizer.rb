@@ -1,8 +1,46 @@
+# -*- coding: utf-8 -*-
 require File.dirname(__FILE__) + "/helper"
 
 class TokenizerTest < Test::Unit::TestCase
   def setup
     @tokenizer = RKelly::Tokenizer.new
+  end
+
+  {
+    :space  => " ",
+    :tab => "\t",
+    :form_feed  => "\f",
+    :vertical_tab  => "\v",
+    :no_break_space  => [0x00A0].pack("U"),
+    :ogham_space_mark => [0x1680].pack("U"),
+    :en_quad => [0x2000].pack("U"),
+    :em_quad => [0x2001].pack("U"),
+    :en_space => [0x2002].pack("U"),
+    :em_space => [0x2003].pack("U"),
+    :three_per_em_space => [0x2004].pack("U"),
+    :four_per_em_space => [0x2005].pack("U"),
+    :six_per_em_space => [0x2006].pack("U"),
+    :figure_space => [0x2007].pack("U"),
+    :punctuation_space => [0x2008].pack("U"),
+    :thin_space => [0x2009].pack("U"),
+    :hair_space => [0x200a].pack("U"),
+    :narrow_no_break_space => [0x202f].pack("U"),
+    :medium_mathematical_space => [0x205f].pack("U"),
+    :ideographic_space => [0x3000].pack("U"),
+
+    # Line terminators
+    :newline  => "\n",
+    :carriage_return  => "\r",
+    :line_separator => [0x2028].pack("U"),
+    :paragraph_separator => [0x2029].pack("U"),
+  }.each do |name, char|
+    define_method(:"test_whitespace_#{name}") do
+      assert_equal([[:S, char]], @tokenizer.tokenize(char))
+    end
+  end
+
+  def assert_tokens(expected, actual)
+    assert_equal(expected, actual.select { |x| x[0] != :S })
   end
 
   def test_comments
@@ -98,6 +136,16 @@ class TokenizerTest < Test::Unit::TestCase
     ], tokens)
   end
 
+  def test_regular_expression_with_slash_inside_charset
+    tokens = @tokenizer.tokenize('foo = /[/]/;')
+    assert_tokens([
+                 [:IDENT, 'foo'],
+                 ['=', '='],
+                 [:REGEXP, '/[/]/'],
+                 [';', ';'],
+    ], tokens)
+  end
+
   def test_regular_expression_is_not_found_if_prev_token_implies_division
     {:IDENT => 'foo',
      :TRUE => 'true',
@@ -152,14 +200,30 @@ class TokenizerTest < Test::Unit::TestCase
     ], tokens)
   end
 
-  def assert_tokens(expected, actual)
-    assert_equal(expected, actual.select { |x| x[0] != :S })
+  def test_unicode_string
+    tokens = @tokenizer.tokenize("foo = 'öäüõ';")
+    assert_tokens([
+                 [:IDENT, 'foo'],
+                 ['=', '='],
+                 [:STRING, "'öäüõ'"],
+                 [';', ';'],
+    ], tokens)
+  end
+
+  def test_unicode_regex
+    tokens = @tokenizer.tokenize("foo = /öäüõ/;")
+    assert_tokens([
+                 [:IDENT, 'foo'],
+                 ['=', '='],
+                 [:REGEXP, "/öäüõ/"],
+                 [';', ';'],
+    ], tokens)
   end
 
   %w{
     break case catch continue default delete do else finally for function
-    if in instanceof new return switch this throw try typeof var void while 
-    with 
+    if in instanceof new return switch this throw try typeof var void while
+    with
 
     const true false null debugger
   }.each do |kw|
@@ -169,6 +233,28 @@ class TokenizerTest < Test::Unit::TestCase
       assert_equal([[kw.upcase.to_sym, kw]], tokens)
     end
   end
+
+  %w{
+    class enum extends super export import
+  }.each do |rw|
+    define_method(:"test_future_reserved_word_#{rw}_is_reserved") do
+      tokens = @tokenizer.tokenize(rw)
+      assert_equal 1, tokens.length
+      assert_equal([[:RESERVED, rw]], tokens)
+    end
+  end
+
+  %w{
+    implements let private public yield
+    interface package protected static
+  }.each do |rw|
+    define_method(:"test_future_reserved_word_#{rw}_is_identifier") do
+      tokens = @tokenizer.tokenize(rw)
+      assert_equal 1, tokens.length
+      assert_equal([[:IDENT, rw]], tokens)
+    end
+  end
+
   {
     '=='  => :EQEQ,
     '!='  => :NE,

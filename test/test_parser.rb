@@ -175,6 +175,79 @@ class ParserTest < Test::Unit::TestCase
                 @parser.parse('var foo = { bar: 10, baz: 1, }'))
   end
 
+  # ECMAScript 5.1 allows use of keywords for property names.
+
+  def test_object_literal_with_keywords_as_property_names
+    assert_sexp(
+                [[:var,
+                  [[:var_decl, :foo, [:assign,
+                    [:object, [[:property, :"var", [:lit, 10]]]]
+                  ]]]
+                ]],
+                @parser.parse('var foo = { var: 10 }'))
+  end
+
+  def test_object_literal_with_literal_as_property_name
+    assert_sexp(
+                [[:var,
+                  [[:var_decl, :foo, [:assign,
+                    [:object, [[:property, :"null", [:lit, 10]]]]
+                  ]]]
+                ]],
+                @parser.parse('var foo = { null: 10 }'))
+  end
+
+  def test_object_literal_with_reserved_keyword_as_property_name
+    assert_sexp(
+                [[:var,
+                  [[:var_decl, :foo, [:assign,
+                    [:object, [[:property, :"class", [:lit, 10]]]]
+                  ]]]
+                ]],
+                @parser.parse('var foo = { class: 10 }'))
+  end
+
+  def test_object_literal_getter_with_keyword_as_getter_name
+    assert_sexp(
+                [[:var,
+                  [[:var_decl, :foo, [:assign,
+                    [:object, [[:getter, :if, [:func_expr, nil, [], [:func_body, []]]]]]
+                  ]]]
+                ]],
+                @parser.parse('var foo = { get if() { } }'))
+  end
+
+  def test_object_literal_setter_with_keyword_as_setter_name
+    assert_sexp(
+                [[:var,
+                  [[:var_decl, :foo, [:assign,
+                    [:object, [[:setter, :return, [:func_expr, nil, [[:param, "v"]], [:func_body, []]]]]]
+                  ]]]
+                ]],
+                @parser.parse('var foo = { set return(v) { } }'))
+  end
+
+  def test_dot_access_with_keyword
+    assert_sexp([[:expression,
+                  [:dot_access,
+                    [:resolve, "bar"],
+                    'var',
+                  ]
+                ]],
+                @parser.parse('bar.var;'))
+  end
+
+  def test_dot_access_with_keyword_on_function_call
+    assert_sexp([[:expression,
+                  [:dot_access,
+                    [:function_call, [:resolve, "bar"], [:args, []]],
+                    'var',
+                  ]
+                ]],
+                @parser.parse('bar().var;'))
+  end
+
+
   def test_this
     assert_sexp(
                 [[:var, [[:var_decl, :foo, [:assign, [:this]]]]]],

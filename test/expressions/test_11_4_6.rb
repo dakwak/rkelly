@@ -62,7 +62,12 @@ class Expressions_11_4_6_Test < ECMAScriptTestCase
     ['1234e-5', 0.01234],
   ]
   0.upto(9) { |x| @@sign_tests << [x, x] }
-  0.upto(15) { |x|
+
+  # 0x0 needs special treatment as sprintf("%#x", 0) results in "0"
+  @@sign_tests << ["0x0", 0]
+  @@sign_tests << ["0X0", 0]
+
+  1.upto(15) { |x|
     @@sign_tests << [sprintf("%#x", x), x]
     @@sign_tests << [sprintf("%#x", x).gsub(/x/, 'X'), x]
     if sprintf("%#x", x) =~ /[a-f]/
@@ -70,6 +75,7 @@ class Expressions_11_4_6_Test < ECMAScriptTestCase
       @@sign_tests << [sprintf("%#x", x).upcase, x]
     end
   }
+
   @@sign_tests.each { |actual, expected|
     define_method(:"test_num_#{actual.to_s.gsub(/[\.+]/, '_')}") do
       @runtime.execute("
