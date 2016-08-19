@@ -2,6 +2,8 @@ Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
   s.name = 'rkelly'
   s.version = '0.0.7'
+  s.summary = 'rkelly'
+  s.description = 'rkelly'
   s.license = 'MIT'
 
   s.files = Dir.glob(%w[README.md lib/**/*.rb])
