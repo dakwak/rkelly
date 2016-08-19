@@ -6,6 +6,10 @@ Gem::Specification.new do |s|
   s.description = 'rkelly'
   s.license = 'MIT'
 
+  s.author = ['tyage']
+  s.email = ''
+  s.homepage = ''
+
   s.files = Dir.glob(%w[README.md lib/**/*.rb])
   s.require_path = 'lib'
 
